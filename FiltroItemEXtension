@@ -1,0 +1,32 @@
+Sub main
+stop
+  
+  xQuery = "SELECT DISTINCT UD.COMPROBANTE_N FROM V_TRFACTURACOMPRA ALIAS_0 LEFT OUTER JOIN ITEMFACTURACOMPRA ITEM ON ITEM.BO_PLACE_ID = ALIAS_0.ITEMSTRANSACCION_ID LEFT OUTER JOIN UD_ITEMRENDICIONFONDOFIJO UD ON UD.ID = ITEM.BOEXTENSION_ID WHERE ALIAS_0.BO_PLACE_ID = '{77B039CA-4A31-11D5-B607-0050DAC017BE}' AND  ALIAS_0.AREARESP_ID IN ( '{6C95FD4F-E0D1-43BF-A260-DEE828ED36F9}' )  AND  ALIAS_0.TIPOTRANSACCION_ID = '{9D17E651-4686-4D02-AD10-CCEB43732D51}'"
+  set xRS = SelectSQL(xQuery, self.Workspace )
+  set xView = NewCompoundView(self, "TRFACTURACOMPRA", self.Workspace, nil, true) 
+  xview.addfilter(NewFilterSpec(xview.columnfrompath("[TIPOTRANSACCION]TIPOTRANSACCION.ID"), "=", "{54CA3D3F-2397-42EE-9CB7-97AB231B8AA2}"))
+  xview.addfilter(NewFilterSpec(xview.columnfrompath("[UD_COMPROBANTEA]BOEXTENSION.EMPLEADO"), "=", SELF.BO_OWNER.PLACEOWNER.DESTINATARIO))
+  xview.addfilter(NewFilterSpec(xview.columnfrompath("[UD_COMPROBANTEA]BOEXTENSION.RENDIDO"), "=", FALSE))
+  xview.addfilter(NewFilterSpec(xview.columnfrompath("IMPUTACIONCONTABLE"), "=", SELF.BO_OWNER.PLACEOWNER.IMPUTACIONCONTABLE))
+  
+  if xRS.size > 0 then
+    for each xItem in xRS
+      xComprobante= xItem.Attributes("comprobante_n").AsString
+	  xView.addfilter(NewFilterSpec(xview.columnfrompath("NOMBRE"), "<>", xComprobante))
+    next
+  end if
+  
+  if self.bo_owner.placeowner.itemstransaccion.size > 1 then
+    for each xItem in self.bo_owner.placeowner.itemstransaccion
+	  'MsgBox "hay un Item "  & xitem.boextension.comprobante_n 
+	  if  xitem.boextension.comprobante_n <> "" then
+	    xView.addfilter(NewFilterSpec(xview.columnfrompath("NOMBRE"), "<>", xitem.boextension.comprobante_n))
+	  end if
+	next
+  end if
+  
+  
+  xView.FillByDefault
+  set returnvalue = xView
+  
+end sub
