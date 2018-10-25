@@ -1,0 +1,117 @@
+sub main 
+stop
+  xSelect = "SELECT count(*) as CONT FROM  V_TREXPEDIENTE ALIAS_0 WHERE ALIAS_0.BO_PLACE_ID = '{A760E4C0-2540-466F-B608-BD09EA34C810}'   AND  ALIAS_0.TIPOTRANSACCION_ID = '{70AE29FF-78E5-4830-8846-A63A747F917A}' AND   ( ALIAS_0.UNIDADOPERATIVA_ID = '{89C2350B-3F01-11D5-86AD-0080AD403F5F}' ) "
+
+  Set xQuery = Transaccion.Workspace.NewQuery
+  xSql = xSelect           
+  xQuery.SQL.Add(xsql)
+  xQuery.Open
+            
+  do While Not xQuery.eof  
+    xCont = xQuery.fieldbyname("CONT").value  
+    xQuery.next               
+  loop
+  xQuery.close
+
+  Total = Cint(xCont)
+  
+  Total = Total + 1
+  
+ 
+  Numero = darFormato( Cstr(Total), "T",  4, "0", "Izq", "", "", nothing)
+  
+  Transaccion.NumeroDocumento = "4038-" & Numero & "-" & CStr(DatePart("YYYY", Date())) & "-0-0-0"
+  
+  
+  
+end sub
+
+
+private function darFormato(xTexto,xTipo, xLongitud, xRelleno, xLadoRelleno, xDecimal, xCantidadDecimal, xObjeto)
+	aDevolver = xTexto
+	''Vemos el ancho
+	esNegativo = False
+	if xLongitud <> 0 then
+	   if xTipo = "N" then
+			if xDecimal = "." then 
+				separador = "."
+			elseif xDecimal = "," then 
+				separador = ","
+			else 
+				separador = xDecimal
+			end if
+
+				xSizeEntero = xLongitud - xCantidadDecimal -1
+				xTexto = GetFormatonumerico (xTexto,xSizeEntero,xCantidadDecimal)
+
+	   		xTexto = replace(xTexto,",",separador )
+	   end if
+	   aDevolver= xTexto
+	   ancho = len(xTexto)
+	   anchodeseado = xLongitud
+	'   if esNegativo then anchodeseado = anchodeseado-1
+	
+	   if ancho > anchodeseado then
+			if xTipo = "T" then
+				if xLadoRelleno = "Izquierda" then
+					aDevolver = right(xTexto,anchodeseado)
+				else
+					aDevolver = Left(xTexto,anchodeseado)
+				end if
+			else
+				aDevolver = right(xTexto,anchodeseado)
+			end if
+	   elseif ancho < anchodeseado then
+	   	  ladorelleno = xLadoRelleno
+		  caracterrelleno = xRelleno
+		  if caracterrelleno = "" then
+		  	 caracterrelleno = " "
+		  end if
+		  relleno = string(anchodeseado-ancho,caracterrelleno)
+	      if ucase(ladorelleno) = ucase("Izquierda") or ucase(ladorelleno) = ucase("IZQ") then
+		  	 aDevolver = relleno & xTexto
+			 if esNegativo then aDevolver = "-" & aDevolver
+		  else
+		     aDevolver = xTexto & relleno 
+		  end if
+	   end if
+	end if
+	
+	
+	darFormato = aDevolver
+end function
+
+
+
+function GetFormatonumerico(xValor,xSizeEntero,xSizeDecimal)
+	xSeparador = DecimalSeparator()
+	xValor = round(xValor, xSizeDecimal)
+'stop
+	xNegativo = false
+	if instr(xValor, "-") <> 0 then xNegativo = true
+	xValor = abs(xValor)
+	
+	if instr(xValor,xSeparador) <> 0 then
+		xParteEntera = mid(xValor,1,instr(xValor,xSeparador)-1)
+		xParteDecimal = mid(xValor,instr(xValor,xSeparador)+1,len(xValor))   
+	else
+		xParteEntera = xValor
+		xParteDecimal = "00"
+	end if
+	GetFormatonumerico = GetFormatoCompleto(xParteEntera,"0",xSizeEntero,"IZQ") & ","& GetFormatoCompleto(xParteDecimal,"0",xSizeDecimal,"DER")  
+	
+	if xNegativo then GetFormatonumerico = "-" & mid(GetFormatonumerico,2)
+end function 
+
+function GetFormatoCompleto(xValor,xCompletarCon,xLongitudTotal,xOrientacion)
+	if (len(xValor) < xLongitudTotal) then
+		Select case xOrientacion 
+			case "IZQ": 
+				GetFormatoCompleto = string(xLongitudTotal - len(xValor),xCompletarCon)& xValor 
+			case "DER":
+				GetFormatoCompleto = xValor & string(xLongitudTotal - len(xValor),xCompletarCon)
+		end select
+	else
+		GetFormatoCompleto = mid( xValor, 1, xLongitudTotal)
+	end if
+end function
